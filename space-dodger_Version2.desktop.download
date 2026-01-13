@@ -1,0 +1,19 @@
+[Desktop Entry]
+Categories=Game;Arcade;
+Comment[en_US]=Space Dodger — now with cat enemies!
+Comment=Space Dodger — now with cat enemies!
+Exec=/path/to/dist/space_dodger
+GenericName[en_US]=
+GenericName=
+Icon=/path/to/icon.png
+MimeType=
+Name[en_US]=Space Dodger — Cat Attack
+Name=Space Dodger — Cat Attack
+Path=
+StartupNotify=true
+Terminal=false
+TerminalOptions=
+Type=Application
+Version=1.0
+X-KDE-SubstituteUID=false
+X-KDE-Username=
