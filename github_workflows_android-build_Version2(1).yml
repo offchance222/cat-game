@@ -1,0 +1,45 @@
+name: Build Android APK (Buildozer Docker)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Ensure build cache directory
+        run: mkdir -p .buildozer-cache
+
+      - name: Restore .buildozer cache
+        uses: actions/cache@v4
+        with:
+          path: .buildozer-cache
+          key: buildozer-cache-${{ runner.os }}-v1
+          restore-keys: |
+            buildozer-cache-${{ runner.os }}-v1
+
+      - name: Run Buildozer inside Docker
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}":/home/user/hostcwd \
+            -v "${{ github.workspace }}/.buildozer-cache":/home/user/.buildozer \
+            -w /home/user/hostcwd \
+            kivy/buildozer:latest \
+            /bin/bash -lc "set -e
+              pip install --upgrade pip || true
+              buildozer -v android debug
+            "
+
+      - name: Upload built APKs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apks
+          path: |
+            bin/*.apk
+            bin/*.aab
