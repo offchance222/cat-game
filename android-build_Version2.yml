@@ -1,0 +1,60 @@
+# .github/workflows/android-build.yml
+name: Build Android APK (Buildozer Docker)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Docker (info)
+        run: docker --version
+
+      - name: Ensure build cache directory
+        run: mkdir -p .buildozer-cache
+
+      - name: Restore .buildozer cache (speed up subsequent builds)
+        uses: actions/cache@v4
+        id: cache-buildozer
+        with:
+          path: .buildozer-cache
+          key: buildozer-cache-${{ runner.os }}-v1
+          restore-keys: |
+            buildozer-cache-${{ runner.os }}-v1
+
+      - name: Run Buildozer (Docker)
+        # Uses Kivy's buildozer image; it will download SDK/NDK/tooling on first run.
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}":/home/user/hostcwd \
+            -v "${{ github.workspace }}/.buildozer-cache":/home/user/.buildozer \
+            -w /home/user/hostcwd \
+            kivy/buildozer:latest \
+            /bin/bash -lc "set -e
+              # ensure venv not interfering; install pip deps in container if needed
+              pip install --upgrade pip || true
+              # run buildozer for android debug (adjust args as needed)
+              buildozer -v android debug
+            "
+
+      - name: Save updated .buildozer cache
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: buildozer-cache
+          path: .buildozer/.buildozer || .buildozer
+
+      - name: Upload built APKs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apks
+          path: |
+            bin/*.apk
+            bin/*.aab
